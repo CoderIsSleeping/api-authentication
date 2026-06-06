@@ -123,6 +123,16 @@ throw new Error(
 
 }
 
+if(
+    !user.isEmailVerified
+){
+
+    throw new Error(
+        "Please verify your email first"
+    );
+
+}
+
 
 
 const isMatch =
