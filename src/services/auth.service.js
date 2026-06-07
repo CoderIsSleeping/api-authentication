@@ -8,6 +8,7 @@ const generateOTP =require("../utils/generateOTP");
 const {
 sendEmail
 }= require("./email.service");
+const crypto=require("crypto");
 
 
 
@@ -398,10 +399,409 @@ return true;
 
 };
 
+const resendOTP = async(data)=>{
+
+
+const {
+email
+}=data;
+
+
+
+const user =
+await User.findOne({
+    email
+});
+
+
+
+if(!user){
+
+    throw new Error(
+    "User not found"
+    );
+
+}
+
+
+
+if(
+user.isEmailVerified
+){
+
+    throw new Error(
+    "Email already verified"
+    );
+
+}
+
+
+
+// remove previous OTP
+
+await OTP.deleteMany({
+
+    user:user._id
+
+});
+
+
+
+// create new OTP
+
+
+const otp =
+generateOTP();
+
+
+
+const hashedOTP =
+await bcrypt.hash(
+    otp,
+    10
+);
+
+
+
+await OTP.create({
+
+user:user._id,
+
+
+otp:hashedOTP,
+
+
+expiresAt:
+
+new Date(
+Date.now()
++
+10*60*1000
+)
+
+
+});
+
+
+
+// send OTP
+
+
+await sendEmail(
+
+user.email,
+
+"New verification OTP",
+
+`Your new OTP is ${otp}`
+
+);
+
+
+
+return true;
+
+
+};
+
+const forgotPassword =async(data)=>{
+
+
+const {
+email
+}=data;
+
+
+
+const user =
+await User.findOne({
+    email
+});
+
+
+
+if(!user){
+
+throw new Error(
+"User not found"
+);
+
+}
+
+
+
+// remove previous OTP
+
+await OTP.deleteMany({
+
+user:user._id
+
+});
+
+
+
+// create OTP
+
+const otp =
+generateOTP();
+
+
+
+const hashedOTP =
+await bcrypt.hash(
+    otp,
+    10
+);
+
+
+
+await OTP.create({
+
+user:user._id,
+
+otp:hashedOTP,
+
+
+expiresAt:
+
+new Date(
+
+Date.now()
+
++
+
+10*60*1000
+
+)
+
+});
+
+
+
+await sendEmail(
+
+user.email,
+
+"Password Reset OTP",
+
+`Your password reset OTP is ${otp}`
+
+);
+
+
+
+return true;
+
+
+};
+
+const verifyResetOTP =async(data)=>{
+
+
+const {
+email,
+otp
+}=data;
+
+
+
+const user =
+await User.findOne({
+email
+});
+
+
+
+if(!user){
+
+throw new Error(
+"User not found"
+);
+
+}
+
+
+
+const otpRecord =
+await OTP.findOne({
+
+user:user._id
+
+});
+
+
+
+if(!otpRecord){
+
+throw new Error(
+"OTP expired"
+);
+
+}
+
+
+
+const match =
+await bcrypt.compare(
+
+otp,
+
+otpRecord.otp
+
+);
+
+
+
+if(!match){
+
+throw new Error(
+"Wrong OTP"
+
+);
+
+}
+
+
+
+// create reset token
+
+
+const resetToken =
+crypto
+.randomBytes(32)
+.toString("hex");
+
+
+
+const hashedToken =
+crypto
+
+.createHash("sha256")
+
+.update(resetToken)
+
+.digest("hex");
+
+
+
+user.passwordResetToken =
+hashedToken;
+
+
+
+user.passwordResetExpires =
+
+Date.now()+15*60*1000;
+
+
+
+await user.save();
+
+
+
+await OTP.deleteOne({
+
+user:user._id
+
+});
+
+
+
+return resetToken;
+
+
+};
+
+const resetPassword =async(data)=>{
+
+
+const {
+
+resetToken,
+
+newPassword
+
+}=data;
+
+
+
+const hashedToken =
+crypto
+
+.createHash("sha256")
+
+.update(resetToken)
+
+.digest("hex");
+
+
+
+const user =
+await User.findOne({
+
+passwordResetToken:
+hashedToken,
+
+
+passwordResetExpires:{
+
+$gt:Date.now()
+
+}
+
+
+});
+
+
+
+if(!user){
+
+throw new Error(
+"Invalid or expired reset token"
+);
+
+}
+
+
+
+user.password =
+await bcrypt.hash(
+
+newPassword,
+
+10
+
+);
+
+
+
+user.passwordResetToken =
+undefined;
+
+
+
+user.passwordResetExpires =
+undefined;
+
+
+
+await user.save();
+
+
+
+return true;
+
+
+};
+
 module.exports = {
     registerUser,
     loginUser,
     refreshAccessToken,
     logoutUser,
-    verifyEmailOTP
+    verifyEmailOTP,
+    resendOTP,
+    forgotPassword,
+    verifyResetOTP,
+    resetPassword
 };
