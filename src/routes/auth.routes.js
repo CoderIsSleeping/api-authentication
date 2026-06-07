@@ -20,6 +20,11 @@ loginSchema
 
 }=require("../validations/auth.validation");
 
+const {
+authLimiter
+}
+=
+require("../middleware/rateLimit.middleware");
 
 router.post(
 "/signup",
@@ -29,6 +34,7 @@ signup
 
 router.post(
 "/login",
+authLimiter,
 validate(loginSchema),
 login
 );
@@ -50,11 +56,13 @@ verifyEmail
 
 router.post(
 "/resend-otp",
+authLimiter,
 resendVerificationOTP
 );
 
 router.post(
 "/forgot-password",
+authLimiter,
 forgotPassword
 );
 
