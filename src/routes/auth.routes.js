@@ -8,15 +8,28 @@ signup,login,refreshToken,logout,verifyEmail,resendVerificationOTP,forgotPasswor
 }
 = require("../controllers/auth.controller");
 
+const validate =
+require("../middleware/validate.middleware");
+
+
+const {
+
+signupSchema,
+
+loginSchema
+
+}=require("../validations/auth.validation");
 
 
 router.post(
 "/signup",
+validate(signupSchema),
 signup
 );
 
 router.post(
 "/login",
+validate(loginSchema),
 login
 );
 
