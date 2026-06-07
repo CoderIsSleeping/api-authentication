@@ -1,11 +1,9 @@
-const authService =
-require("../services/auth.service");
+const authService =require("../services/auth.service");
+const asyncHandler =require("../utils/asyncHandler");
 
 
-const signup = async(req,res)=>{
-
-
-try{
+const signup = asyncHandler(
+    async(req,res)=>{
 
 
     const user =
@@ -34,87 +32,58 @@ try{
 
 
 }
-catch(error){
+);
+
+const login = asyncHandler(
+    async(req,res)=>{
+
+    const result =
+    await authService.loginUser(
+    req.body
+    );
+
+    res.cookie(
+
+    "refreshToken",
+
+    result.refreshToken,
+
+    {
+
+    httpOnly:true,
+
+    secure:true,
+    sameSite:"strict",
+
+    maxAge:
+    7*24*60*60*1000
+
+    }
+
+    );
+
+    res.status(200).json({
+
+    success:true,
+
+    message:"Login successful",
+
+    accessToken:
+    result.accessToken,
 
 
-    res.status(400).json({
-
-        success:false,
-        message:error.message
-
+    user:{
+    id:result.user._id,
+    name:result.user.name,
+    email:result.user.email
+    }
+        
     });
-
-}
-
-
-};
-
-const login = async(req,res)=>{
-
-
-try{
-
-const result =
-await authService.loginUser(
-req.body
+    }
 );
 
-res.cookie(
-
-"refreshToken",
-
-result.refreshToken,
-
-{
-
-httpOnly:true,
-
-secure:true,
-sameSite:"strict",
-
-maxAge:
-7*24*60*60*1000
-
-}
-
-);
-
-res.status(200).json({
-
-success:true,
-
-message:"Login successful",
-
-accessToken:
-result.accessToken,
-
-
-user:{
-id:result.user._id,
-name:result.user.name,
-email:result.user.email
-}
-
-});
-
-
-
-}
-catch(error){
-
-res.status(400).json({
-success:false,
-message:error.message
-});
-
-}
-
-};
-
-const refreshToken = async(req,res)=>{
-
-
-try{
+const refreshToken = asyncHandler(
+async(req,res)=>{
 
     console.log(
     "ALL COOKIES:",
@@ -167,27 +136,10 @@ result.accessToken
 
 
 }
-catch(error){
+);
 
-
-res.status(401).json({
-
-success:false,
-
-message:error.message
-
-});
-
-
-}
-
-
-};
-
-const logout = async(req,res)=>{
-
-
-try{
+const logout = asyncHandler(
+async(req,res)=>{
 
 
     const token =
@@ -219,28 +171,10 @@ try{
 
 
 }
-catch(error){
+);
 
-
-    res.status(400).json({
-
-        success:false,
-
-        message:error.message
-
-    });
-
-
-}
-
-
-};
-
-const verifyEmail =async(req,res)=>{
-
-
-try{
-
+const verifyEmail =asyncHandler(
+async(req,res)=>{
 
 await authService.verifyEmailOTP(
     req.body
@@ -260,28 +194,12 @@ message:
 
 
 }
-catch(error){
 
 
-res.status(400).json({
+);
 
-success:false,
-
-message:error.message
-
-});
-
-
-}
-
-
-};
-
-const resendVerificationOTP =async(req,res)=>{
-
-
-try{
-
+const resendVerificationOTP =asyncHandler(
+async(req,res)=>{
 
 await authService.resendOTP(
     req.body
@@ -301,28 +219,11 @@ message:
 
 
 }
-catch(error){
 
+);
 
-res.status(400).json({
-
-success:false,
-
-message:error.message
-
-});
-
-
-}
-
-
-};
-
-const forgotPassword =async(req,res)=>{
-
-
-try{
-
+const forgotPassword =asyncHandler(
+async(req,res)=>{
 
 await authService.forgotPassword(
 req.body
@@ -339,28 +240,12 @@ message:"OTP sent"
 
 
 }
-catch(error){
 
 
-res.status(400).json({
+);
 
-success:false,
-
-message:error.message
-
-});
-
-
-}
-
-
-};
-
-const verifyResetOTP =async(req,res)=>{
-
-
-try{
-
+const verifyResetOTP =asyncHandler(
+async(req,res)=>{
 
 const token =
 await authService.verifyResetOTP(
@@ -379,24 +264,12 @@ resetToken:token
 
 
 }
-catch(error){
 
-res.status(400).json({
+);
 
-success:false,
+const resetPassword =asyncHandler(
+async(req,res)=>{
 
-message:error.message
-
-});
-
-}
-
-};
-
-const resetPassword =async(req,res)=>{
-
-
-try{
 
 
 await authService.resetPassword(
@@ -416,21 +289,8 @@ message:
 
 
 }
-catch(error){
 
-
-res.status(400).json({
-
-success:false,
-
-message:error.message
-
-});
-
-
-}
-
-};
+);
 
 module.exports={
     signup,
