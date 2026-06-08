@@ -4,12 +4,29 @@ const cookieParser = require("cookie-parser");
 const authRoutes=require("./routes/auth.routes");
 const userRoutes =require("./routes/user.routes");
 const errorHandler =require("./middleware/error.middleware");
+const helmet=require("helmet");
 
 const app=express();
 
+app.disable("x-powered-by");
+
+app.use(helmet());
+app.use(cors({
+
+    origin:
+    process.env.CLIENT_URL,
+
+
+    credentials:true
+
+    })
+
+);
 app.use(express.json());
 app.use(cors());
 app.use(cookieParser());
+
+
 
 //health check route
 app.use("/api/v1/auth",
